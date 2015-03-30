@@ -79,9 +79,9 @@ namespace CiRSSDK
 		pxcStatus cStatus = mSenseMgr->Init();
 		if (cStatus >= PXC_STATUS_NO_ERROR)
 		{
+			mCoordinateMapper = mSenseMgr->QueryCaptureManager()->QueryDevice()->CreateProjection();
 			if (mShouldAlign)
 			{
-				mCoordinateMapper = mSenseMgr->QueryCaptureManager()->QueryDevice()->CreateProjection();
 				mColorToDepthFrame = Surface8u(mRgbSize.x, mRgbSize.y, true, SurfaceChannelOrder::RGBA);
 				mDepthToColorFrame = Surface8u(mRgbSize.x, mRgbSize.y, true, SurfaceChannelOrder::RGBA);
 			}
@@ -133,7 +133,7 @@ namespace CiRSSDK
 					cDepthImage->ReleaseAccess(&cDepthData);
 					return false;
 				}
-				mDepthFrame = Channel16u(mDepthSize.x, mDepthSize.y, mRgbSize.x*sizeof(uint16_t), 1, reinterpret_cast<uint16_t *>(cDepthData.planes[0]));
+				mDepthFrame = Channel16u(mDepthSize.x, mDepthSize.y, mDepthSize.x*sizeof(uint16_t), 1, reinterpret_cast<uint16_t *>(cDepthData.planes[0]));
 				cDepthImage->ReleaseAccess(&cDepthData);
 
 				if (mShouldGetDepthAsColor)
