@@ -116,6 +116,11 @@ namespace CiRSSDK
 		PXCSenseManager		*mSenseMgr;
 		PXCProjection		*mCoordinateMapper;
 		PXCCapture::Sample	*mCurrentSample;
+
+		vector<PXCPoint3DF32>	mInPoints3D;
+		vector<PXCPoint3DF32>	mOutPoints3D;
+		vector<PXCPointF32>		mOutPoints2D;
+
 	};
 
 

@@ -148,6 +148,7 @@ namespace CiRSSDK
 					mDepth8uFrame = Surface8u(reinterpret_cast<uint8_t *>(cDepth8uData.planes[0]), mDepthSize.x, mDepthSize.y, mDepthSize.x * 4, SurfaceChannelOrder::RGBA);
 					cDepthImage->ReleaseAccess(&cDepth8uData);
 				}
+
 				if (!mHasRgb)
 				{
 					mSenseMgr->ReleaseFrame();
@@ -245,10 +246,12 @@ namespace CiRSSDK
 			cPoint.y = pImageY;
 			cPoint.z = pImageZ;
 
-			PXCPoint3DF32 cInPoint[]{cPoint};
-			PXCPoint3DF32 cOutPoint[1];
-			mCoordinateMapper->ProjectDepthToCamera(1, cInPoint, cOutPoint);
-			return vec3(cOutPoint[0].x, cOutPoint[0].y, cOutPoint[0].z);
+			mInPoints3D.clear();
+			mInPoints3D.push_back(cPoint);
+			mOutPoints3D.clear();
+			mOutPoints3D.resize(2);
+			mCoordinateMapper->ProjectDepthToCamera(1, &mInPoints3D[0], &mOutPoints3D[0]);
+			return vec3(mOutPoints3D[0].x, mOutPoints3D[0].y, mOutPoints3D[0].z);
 		}
 		return vec3(0);
 	}
@@ -272,13 +275,16 @@ namespace CiRSSDK
 			cPoint.x = pImageX;
 			cPoint.y = pImageY;
 			cPoint.z = pImageZ;
-			PXCPoint3DF32 cInPoint[] = { cPoint };
-			PXCPointF32 cOutPoints[1];
+			PXCPoint3DF32 *cInPoint = new PXCPoint3DF32[1];
+			cInPoint[0] = cPoint;
+			PXCPointF32 *cOutPoints = new PXCPointF32[1];
 			mCoordinateMapper->MapDepthToColor(1, cInPoint, cOutPoints);
 
 			float cColorX = cOutPoints[0].x;
 			float cColorY = cOutPoints[0].y;
 
+			delete cInPoint;
+			delete cOutPoints;
 			if (cColorX >= 0 && cColorX < mRgbSize.x&&cColorY >= 0 && cColorY < mRgbSize.y)
 			{
 				Color8u cColor = mRgbFrame.getPixel(ivec2(cColorX, cColorY));
@@ -311,11 +317,13 @@ namespace CiRSSDK
 			PXCPoint3DF32 cPoint;
 			cPoint.x = pCameraX; cPoint.y = pCameraY; cPoint.z = pCameraZ;
 
-			PXCPoint3DF32 cInPoint[]{cPoint};
-			PXCPointF32 cOutPoint[1];
-			mCoordinateMapper->ProjectCameraToColor(1, cInPoint, cOutPoint);
+			mInPoints3D.clear();
+			mInPoints3D.push_back(cPoint);
+			mOutPoints2D.clear();
+			mOutPoints2D.resize(2);
+			mCoordinateMapper->ProjectCameraToColor(1, &mInPoints3D[0], &mOutPoints2D[0]);
 
-			ivec2 cColorPoint(cOutPoint[0].x, cOutPoint[0].y);
+			ivec2 cColorPoint(static_cast<int>(mOutPoints2D[0].x), static_cast<int>(mOutPoints2D[0].y));
 			Color8u cColor = mRgbFrame.getPixel(cColorPoint);
 
 			return Color(cColor);
@@ -339,16 +347,19 @@ namespace CiRSSDK
 			cPoint.x = pImageX;
 			cPoint.y = pImageY;
 			cPoint.z = pImageZ;
-			PXCPoint3DF32 cInPoint[] = { cPoint };
-			PXCPointF32 cOutPoints[1];
+
+			PXCPoint3DF32 *cInPoint = new PXCPoint3DF32[1];
+			cInPoint[0] = cPoint;
+			PXCPointF32 *cOutPoints = new PXCPointF32[1];
 			mCoordinateMapper->MapDepthToColor(1, cInPoint, cOutPoints);
 
 			float cColorX = cOutPoints[0].x;
 			float cColorY = cOutPoints[0].y;
 
+			delete cInPoint;
+			delete cOutPoints;
 			return vec2(cColorX / (float)mRgbSize.x, cColorY / (float)mRgbSize.y);
 		}
-
 		return vec2(0);
 	}
 
@@ -370,11 +381,15 @@ namespace CiRSSDK
 			PXCPoint3DF32 cPoint;
 			cPoint.x = pCameraX; cPoint.y = pCameraY; cPoint.z = pCameraZ;
 
-			PXCPoint3DF32 cInPoint[]{cPoint};
-			PXCPointF32 cOutPoint[1];
+			PXCPoint3DF32 *cInPoint = new PXCPoint3DF32[1];
+			cInPoint[0] = cPoint;
+			PXCPointF32 *cOutPoint = new PXCPointF32[1];
 			mCoordinateMapper->ProjectCameraToColor(1, cInPoint, cOutPoint);
 
-			return vec2(cOutPoint[0].x / static_cast<float>(mRgbSize.x), cOutPoint[0].y / static_cast<float>(mRgbSize.y));
+			vec2 cRetPt(cOutPoint[0].x / static_cast<float>(mRgbSize.x), cOutPoint[0].y / static_cast<float>(mRgbSize.y));
+			delete cInPoint;
+			delete cOutPoint;
+			return cRetPt;
 		}
 		return vec2(0);
 	}
