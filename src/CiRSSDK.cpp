@@ -199,6 +199,7 @@ namespace CiRSSDK
 	{
 		if (mSenseMgr)
 		{
+			mCoordinateMapper->Release();
 			mSenseMgr->Close();
 			return true;
 		}
